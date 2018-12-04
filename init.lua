@@ -94,7 +94,7 @@ function whiteurl()
                 elseif ngxfind(ngx.var.uri,rule,"isjo") then
                     -- log('whiteurl',ngx.var.uri,'-',rule)
                     return true 
-                 end
+                end
             end
         end
     end
@@ -241,24 +241,24 @@ function hostDenyCC()
                         CCseconds=tonumber(m[3])
                         CCbanseconds=tonumber(m[4])
                         local token = remote_ip..rule
-        local limit = ngx.shared.limit
-        local req,_=limit:get(token)
-        if req then
-            if req > CCcount then
-                 ngx.exit(503)
-                return true
+                        local limit = ngx.shared.limit
+                        local req,_=limit:get(token)
+                        if req then
+                            if req > CCcount then
+                                ngx.exit(503)
+                                return true
                             elseif req == CCcount then
                                 limit:set(token,req+1,CCbanseconds)
                                 log("HOSDENYCC",uri," ban a ip: "..remote_ip,rule)
                                 ngx.exit(503)
                                 return true
-            else
-                 limit:incr(token,1)
-            end
-        else
-            limit:set(token,1,CCseconds)
-        end
-    end
+                            else
+                                limit:incr(token,1)
+                            end
+                        else
+                            limit:set(token,1,CCseconds)
+                        end
+                    end
                 end
             end
         end
