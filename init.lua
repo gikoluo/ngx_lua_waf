@@ -37,12 +37,12 @@ function log(method,url,data,ruletag)
     if attacklog then
         local realIp = getClientIp()
         local ua = ngx.var.http_user_agent
-        local servername=ngx.var.server_name
+        local servername=ngx.var.host
         local time=ngx.localtime()
         if ua  then
-            line = realIp.." ["..time.."] \""..method.." "..servername..url.."\" \""..data.."\"  \""..ua.."\" \""..ruletag.."\"\n"
+            line = realIp.." ["..time.."] \""..method.." "..servername.." - "..url.."\" \""..data.."\"  \""..ua.."\" \""..ruletag.."\"\n"
         else
-            line = realIp.." ["..time.."] \""..method.." "..servername..url.."\" \""..data.."\" - \""..ruletag.."\"\n"
+            line = realIp.." ["..time.."] \""..method.." "..servername.." - "..url.."\" \""..data.."\" - \""..ruletag.."\"\n"
         end
         local filename = logpath..'/'..servername.."_"..ngx.today().."_sec.log"
         write(filename,line)
