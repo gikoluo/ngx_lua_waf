@@ -14,6 +14,7 @@ WhiteCheck = optionIsOn(whiteModule)
 PathInfoFix = optionIsOn(PathInfoFix)
 attacklog = optionIsOn(attacklog)
 CCDeny = optionIsOn(CCDeny)
+HostCCDeny = optionIsOn(HostCCDeny)
 Redirect=optionIsOn(Redirect)
 local file = io.open('config.lua')
 
@@ -68,6 +69,7 @@ uarules=read_rule('user-agent')
 wturlrules=read_rule('whiteurl')
 postrules=read_rule('post')
 ckrules=read_rule('cookie')
+hostccdeny=read_rule('hostdenycc')
 
 function say_html()
     if Redirect then
@@ -136,7 +138,6 @@ function args()
     return false
 end
 
-
 function url()
     if UrlDeny then
         for _,rule in pairs(urlrules) do
@@ -194,18 +195,41 @@ function denycc()
         local uri=ngx.var.uri
         CCcount=tonumber(string.match(CCrate,'(.*)/'))
         CCseconds=tonumber(string.match(CCrate,'/(.*)'))
-        local token = getClientIp()..uri
+function hostDenyCC()
+    if HostCCDeny then
+        local uri=ngx.var.uri
+        local host=ngx.var.host
+        local remote_ip = getClientIp()
+        if hostccdeny ~= nil then
+            for _,rule in pairs(hostccdeny) do
+                local m, err = ngxmatch(rule,"URL:([^ ]*) RATE:([0-9]+)/([0-9]+)/([0-9]+)")
+                if m then
+                    rule = m[1]
+                    if ngxfind(host..uri,rule,"isjo") then
+                        CCcount=tonumber(m[2])
+                        CCseconds=tonumber(m[3])
+                        CCbanseconds=tonumber(m[4])
+                        local token = remote_ip..rule
         local limit = ngx.shared.limit
         local req,_=limit:get(token)
         if req then
             if req > CCcount then
                  ngx.exit(503)
                 return true
+                            elseif req == CCcount then
+                                limit:set(token,req+1,CCbanseconds)
+                                log("HOSDENYCC",uri," ban a ip: "..remote_ip,rule)
+                                ngx.exit(503)
+                                return true
             else
                  limit:incr(token,1)
             end
         else
             limit:set(token,1,CCseconds)
+        end
+    end
+                end
+            end
         end
     end
     return false
