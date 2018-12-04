@@ -3,12 +3,13 @@ local method=ngx.req.get_method()
 local ngxmatch=ngx.re.match
 if whiteip() then
 elseif blockip() then
+elseif whiteurl() then
 elseif denycc() then
+elseif hostDenyCC() then
 elseif ngx.var.http_Acunetix_Aspect then
     ngx.exit(444)
 elseif ngx.var.http_X_Scan_Memo then
     ngx.exit(444)
-elseif whiteurl() then
 elseif ua() then
 elseif url() then
 elseif args() then
@@ -42,7 +43,7 @@ elseif PostCheck then
 	   	        return true
     	    	end
 		size = size + len(data)
-		local m = ngxmatch(data,[[Content-Disposition: form-data;(.+)filename="(.+)\\.(.*)"]],'ijo')
+		local m = ngxmatch(data,[[Content-Disposition: form-data;(.+)filename="(.+)\.(.*)"]],'ijo')
         	if m then
             		fileExtCheck(m[3])
             		filetranslate = true

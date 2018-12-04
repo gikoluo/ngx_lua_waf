@@ -1,4 +1,14 @@
-##ngx_lua_waf
+## SunriseYDY 更新内容
+
+1. 修复一个小bug
+2. 将 ngx.re.match替换为ngx.re.find
+3. 完善DenyCC，将匹配规则由ip+url改为ip+host，更加符合个人使用情况。
+4. 添加根据host+url限制访问频率的功能，可自定义某个URL并配置限制频率。配置规则为 [wafconf/hostdenycc](wafconf/hostdenycc) ，请按照示例的格式来添加规则（`URL:www.example.com/denycc/ RATE:10/5/300`），注意 URL 和 RATE 有空格分隔。示例中，“10/5/300”代表5秒内访问达到10次就限制访问300秒。
+5. 扩展whiteurl模块，添加 host+url 匹配规则，例如: `URL:www.example.com/whiteurl/`。可配合 DenyCC 功能来使用(例如该服务器中配置有多个网站，若想忽略某些网站，就可以将其添加到whiteurl中)
+
+下面是原作者的README内容
+
+## ngx_lua_waf
 
 ngx_lua_waf是我刚入职趣游时候开发的一个基于ngx_lua的web应用防火墙。
 
@@ -6,24 +16,25 @@ ngx_lua_waf是我刚入职趣游时候开发的一个基于ngx_lua的web应用�
 
 现在开源出来，遵从MIT许可协议。其中包含我们的过滤规则。如果大家有什么建议和想fa，欢迎和我一起完善。
 
-###用途：
-    	
-	防止sql注入，本地包含，部分溢出，fuzzing测试，xss,SSRF等web攻击
-	防止svn/备份之类文件泄漏
-	防止ApacheBench之类压力测试工具的攻击
-	屏蔽常见的扫描黑客工具，扫描器
-	屏蔽异常的网络请求
-	屏蔽图片附件类目录php执行权限
-	防止webshell上传
+### 用途：
 
-###推荐安装:
+```
+防止sql注入，本地包含，部分溢出，fuzzing测试xss,SSRF等web攻击
+防止svn/备份之类文件泄漏
+防止ApacheBench之类压力测试工具的攻击
+屏蔽常见的扫描黑客工具，扫描器
+屏蔽异常的网络请求
+屏蔽图片附件类目录php执行权限
+防止webshell上传
+```
+
+### 推荐安装:
 
 推荐使用lujit2.1做lua支持
 
 ngx_lua如果是0.9.2以上版本，建议正则过滤函数改为ngx.re.find，匹配效率会提高三倍左右。
 
-
-###使用说明：
+### 使用说明：
 
 nginx安装路径假设为:/usr/local/nginx/conf/
 
@@ -45,7 +56,7 @@ nginx安装路径假设为:/usr/local/nginx/conf/
 然后重启nginx即可
 
 
-###配置文件详细说明：
+### 配置文件详细说明：
 
     	RulePath = "/usr/local/nginx/conf/waf/wafconf/"
         --规则存放目录
@@ -78,7 +89,7 @@ nginx安装路径假设为:/usr/local/nginx/conf/
         --警告内容,可在中括号内自定义
         备注:不要乱动双引号，区分大小写
         
-###检查规则是否生效
+### 检查规则是否生效
 
 部署完毕可以尝试如下命令：        
   
@@ -88,13 +99,13 @@ nginx安装路径假设为:/usr/local/nginx/conf/
 注意:默认，本机在白名单不过滤，可自行调整config.lua配置
 
 
-###效果图如下：
+### 效果图如下：
 
 ![sec](http://i.imgur.com/wTgOcm2.png)
 
 ![sec](http://i.imgur.com/DqU30au.png)
 
-###规则更新：
+### 规则更新：
 
 考虑到正则的缓存问题，动态规则会影响性能，所以暂没用共享内存字典和redis之类东西做动态管理。
 
@@ -102,7 +113,7 @@ nginx安装路径假设为:/usr/local/nginx/conf/
 
 只记录过滤日志，不开启过滤，在代码里在check前面加上--注释即可，如果需要过滤，反之
 
-###一些说明：
+### 一些说明：
 
 	过滤规则在wafconf下，可根据需求自行调整，每条规则需换行,或者用|分割
 	

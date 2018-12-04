@@ -1,6 +1,7 @@
 require 'config'
 local match = string.match
 local ngxmatch=ngx.re.match
+local ngxfind=ngx.re.find
 local unescape=ngx.unescape_uri
 local get_headers = ngx.req.get_headers
 local optionIsOn = function (options) return options == "on" and true or false end
@@ -13,7 +14,10 @@ WhiteCheck = optionIsOn(whiteModule)
 PathInfoFix = optionIsOn(PathInfoFix)
 attacklog = optionIsOn(attacklog)
 CCDeny = optionIsOn(CCDeny)
+HostCCDeny = optionIsOn(HostCCDeny)
 Redirect=optionIsOn(Redirect)
+local file = io.open('config.lua')
+
 function getClientIp()
         IP  = ngx.var.remote_addr 
         if IP == nil then
@@ -21,6 +25,7 @@ function getClientIp()
         end
         return IP
 end
+
 function write(logfile,msg)
     local fd = io.open(logfile,"ab")
     if fd == nil then return end
@@ -28,16 +33,17 @@ function write(logfile,msg)
     fd:flush()
     fd:close()
 end
+
 function log(method,url,data,ruletag)
     if attacklog then
         local realIp = getClientIp()
         local ua = ngx.var.http_user_agent
-        local servername=ngx.var.server_name
+        local servername=ngx.var.host
         local time=ngx.localtime()
         if ua  then
-            line = realIp.." ["..time.."] \""..method.." "..servername..url.."\" \""..data.."\"  \""..ua.."\" \""..ruletag.."\"\n"
+            line = realIp.." ["..time.."] \""..method.." "..servername.." - "..url.."\" \""..data.."\"  \""..ua.."\" \""..ruletag.."\"\n"
         else
-            line = realIp.." ["..time.."] \""..method.." "..servername..url.."\" \""..data.."\" - \""..ruletag.."\"\n"
+            line = realIp.." ["..time.."] \""..method.." "..servername.." - "..url.."\" \""..data.."\" - \""..ruletag.."\"\n"
         end
         local filename = logpath..'/'..servername.."_"..ngx.today().."_sec.log"
         write(filename,line)
@@ -45,7 +51,7 @@ function log(method,url,data,ruletag)
 end
 ------------------------------------规则读取函数-------------------------------------------------------------------
 function read_rule(var)
-    file = io.open(rulepath..'/'..var,"r")
+    file = io.open(rulepath..var,"r")
     if file==nil then
         return
     end
@@ -63,7 +69,7 @@ uarules=read_rule('user-agent')
 wturlrules=read_rule('whiteurl')
 postrules=read_rule('post')
 ckrules=read_rule('cookie')
-
+hostccdeny=read_rule('hostdenycc')
 
 function say_html()
     if Redirect then
@@ -78,20 +84,29 @@ function whiteurl()
     if WhiteCheck then
         if wturlrules ~=nil then
             for _,rule in pairs(wturlrules) do
-                if ngxmatch(ngx.var.uri,rule,"isjo") then
+                -- 针对完整 URL 白名单进行匹配
+                if ngxfind(rule,"URL:","sjo") then
+                    rule=string.gsub(rule,"URL:","",1)
+                    if ngxfind(ngx.var.host..ngx.var.uri,rule,"isjo") then
+                        -- log('whiteurl',ngx.var.uri,'-',rule)
+                        return true
+                    end
+                elseif ngxfind(ngx.var.uri,rule,"isjo") then
+                    -- log('whiteurl',ngx.var.uri,'-',rule)
                     return true 
-                 end
+                end
             end
         end
     end
     return false
 end
+
 function fileExtCheck(ext)
     local items = Set(black_fileExt)
     ext=string.lower(ext)
     if ext then
         for rule in pairs(items) do
-            if ngx.re.match(ext,rule,"isjo") then
+            if ngxfind(ext,rule,"isjo") then
 	        log('POST',ngx.var.request_uri,"-","file attack with ext "..ext)
             say_html()
             end
@@ -104,6 +119,7 @@ function Set (list)
   for _, l in ipairs(list) do set[l] = true end
   return set
 end
+
 function args()
     for _,rule in pairs(argsrules) do
         local args = ngx.req.get_uri_args()
@@ -120,7 +136,7 @@ function args()
             else
                 data=val
             end
-            if data and type(data) ~= "boolean" and rule ~="" and ngxmatch(unescape(data),rule,"isjo") then
+            if data and type(data) ~= "boolean" and rule ~="" and ngxfind(unescape(data),rule,"isjo") then
                 log('GET',ngx.var.request_uri,"-",rule)
                 say_html()
                 return true
@@ -130,11 +146,10 @@ function args()
     return false
 end
 
-
 function url()
     if UrlDeny then
         for _,rule in pairs(urlrules) do
-            if rule ~="" and ngxmatch(ngx.var.request_uri,rule,"isjo") then
+            if rule ~="" and ngxfind(ngx.var.request_uri,rule,"isjo") then
                 log('GET',ngx.var.request_uri,"-",rule)
                 say_html()
                 return true
@@ -148,7 +163,7 @@ function ua()
     local ua = ngx.var.http_user_agent
     if ua ~= nil then
         for _,rule in pairs(uarules) do
-            if rule ~="" and ngxmatch(ua,rule,"isjo") then
+            if rule ~="" and ngxfind(ua,rule,"isjo") then
                 log('UA',ngx.var.request_uri,"-",rule)
                 say_html()
             return true
@@ -157,9 +172,10 @@ function ua()
     end
     return false
 end
+
 function body(data)
     for _,rule in pairs(postrules) do
-        if rule ~="" and data~="" and ngxmatch(unescape(data),rule,"isjo") then
+        if rule ~="" and data~="" and ngxfind(unescape(data),rule,"isjo") then
             log('POST',ngx.var.request_uri,data,rule)
             say_html()
             return true
@@ -167,11 +183,12 @@ function body(data)
     end
     return false
 end
+
 function cookie()
     local ck = ngx.var.http_cookie
     if CookieCheck and ck then
         for _,rule in pairs(ckrules) do
-            if rule ~="" and ngxmatch(ck,rule,"isjo") then
+            if rule ~="" and ngxfind(ck,rule,"isjo") then
                 log('Cookie',ngx.var.request_uri,"-",rule)
                 say_html()
             return true
@@ -184,20 +201,66 @@ end
 function denycc()
     if CCDeny then
         local uri=ngx.var.uri
+        local host=ngx.var.host
         CCcount=tonumber(string.match(CCrate,'(.*)/'))
         CCseconds=tonumber(string.match(CCrate,'/(.*)'))
-        local token = getClientIp()..uri
+        local token = getClientIp()..host
         local limit = ngx.shared.limit
         local req,_=limit:get(token)
         if req then
             if req > CCcount then
-                 ngx.exit(503)
+                ngx.exit(503)
+                return true
+            elseif req == CCcount then
+                limit:set(token,req+1,600)
+                log("CCDeny","-"," ban a ip ",'-')
+                ngx.exit(503)
                 return true
             else
                  limit:incr(token,1)
             end
         else
             limit:set(token,1,CCseconds)
+        end
+    end
+    return false
+end
+
+function hostDenyCC()
+    if HostCCDeny then
+        local uri=ngx.var.uri
+        local host=ngx.var.host
+        local remote_ip = getClientIp()
+        if hostccdeny ~= nil then
+            for _,rule in pairs(hostccdeny) do
+                local m, err = ngxmatch(rule,"URL:([^ ]*) RATE:([0-9]+)/([0-9]+)/([0-9]+)")
+                if m then
+                    rule = m[1]
+                    if ngxfind(host..uri,rule,"isjo") then
+                        CCcount=tonumber(m[2])
+                        CCseconds=tonumber(m[3])
+                        CCbanseconds=tonumber(m[4])
+                        local token = remote_ip..rule
+                        local limit = ngx.shared.limit
+                        local req,_=limit:get(token)
+                        if req then
+                            if req > CCcount then
+                                ngx.exit(503)
+                                return true
+                            elseif req == CCcount then
+                                limit:set(token,req+1,CCbanseconds)
+                                log("HOSDENYCC",uri," ban a ip: "..remote_ip,rule)
+                                ngx.exit(503)
+                                return true
+                            else
+                                limit:incr(token,1)
+                            end
+                        else
+                            limit:set(token,1,CCseconds)
+                        end
+                    end
+                end
+            end
         end
     end
     return false
