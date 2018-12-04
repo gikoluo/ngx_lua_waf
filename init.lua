@@ -84,7 +84,15 @@ function whiteurl()
     if WhiteCheck then
         if wturlrules ~=nil then
             for _,rule in pairs(wturlrules) do
-                if ngxmatch(ngx.var.uri,rule,"isjo") then
+                -- 针对完整 URL 白名单进行匹配
+                if ngxfind(rule,"URL:","sjo") then
+                    rule=string.gsub(rule,"URL:","",1)
+                    if ngxfind(ngx.var.host..ngx.var.uri,rule,"isjo") then
+                        -- log('whiteurl',ngx.var.uri,'-',rule)
+                        return true
+                    end
+                elseif ngxfind(ngx.var.uri,rule,"isjo") then
+                    -- log('whiteurl',ngx.var.uri,'-',rule)
                     return true 
                  end
             end
