@@ -193,8 +193,31 @@ end
 function denycc()
     if CCDeny then
         local uri=ngx.var.uri
+        local host=ngx.var.host
         CCcount=tonumber(string.match(CCrate,'(.*)/'))
         CCseconds=tonumber(string.match(CCrate,'/(.*)'))
+        local token = getClientIp()..host
+        local limit = ngx.shared.limit
+        local req,_=limit:get(token)
+        if req then
+            if req > CCcount then
+                ngx.exit(503)
+                return true
+            elseif req == CCcount then
+                limit:set(token,req+1,600)
+                log("CCDeny","-"," ban a ip ",'-')
+                ngx.exit(503)
+                return true
+            else
+                 limit:incr(token,1)
+            end
+        else
+            limit:set(token,1,CCseconds)
+        end
+    end
+    return false
+end
+
 function hostDenyCC()
     if HostCCDeny then
         local uri=ngx.var.uri
