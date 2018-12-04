@@ -15,6 +15,8 @@ PathInfoFix = optionIsOn(PathInfoFix)
 attacklog = optionIsOn(attacklog)
 CCDeny = optionIsOn(CCDeny)
 Redirect=optionIsOn(Redirect)
+local file = io.open('config.lua')
+
 function getClientIp()
         IP  = ngx.var.remote_addr 
         if IP == nil then
@@ -48,7 +50,7 @@ function log(method,url,data,ruletag)
 end
 ------------------------------------规则读取函数-------------------------------------------------------------------
 function read_rule(var)
-    file = io.open(rulepath..'/'..var,"r")
+    file = io.open(rulepath..var,"r")
     if file==nil then
         return
     end
