@@ -15,6 +15,7 @@ PathInfoFix = optionIsOn(PathInfoFix)
 attacklog = optionIsOn(attacklog)
 CCDeny = optionIsOn(CCDeny)
 HostCCDeny = optionIsOn(HostCCDeny)
+HttpReferCCDeny = optionIsOn(HttpReferCCDeny)
 Redirect=optionIsOn(Redirect)
 local file = io.open('config.lua')
 
@@ -221,6 +222,43 @@ function denycc()
             end
         else
             limit:set(token,1,CCseconds)
+        end
+    end
+    return false
+end
+
+function httpReferDenycc()
+    if HttpReferCCDeny then
+        local uri=ngx.var.uri
+        local host=ngx.var.host
+        local httpRefer=ngx.var.http_referer
+        if httpRefer == nil or httpRefer == "" then
+            return false
+        end
+        local m, err = ngxmatch(HttpReferCCRate,"([0-9]+)/([0-9]+)/([0-9]+)")
+        if m then
+            CCcount=tonumber(m[1])
+            CCseconds=tonumber(m[2])
+            CCbanseconds=tonumber(m[3])
+
+            local token = host..httpRefer
+            local limit = ngx.shared.limit
+            local req,_=limit:get(token)
+            if req then
+                if req > CCcount then
+                    ngx.exit(503)
+                    return true
+                elseif req == CCcount then
+                    limit:set(token,req+1,CCbanseconds)
+                    log("HttpReferCCDeny","-"," ban a http_refer ","rule: "..httpRefer)
+                    ngx.exit(503)
+                    return true
+                else
+                    limit:incr(token,1)
+                end
+            else
+                limit:set(token,1,CCseconds)
+            end
         end
     end
     return false

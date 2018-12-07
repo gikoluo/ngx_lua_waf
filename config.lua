@@ -10,8 +10,10 @@ black_fileExt={"php","jsp"}
 ipWhitelist={"127.0.0.1","192.168.123.1"}
 ipBlocklist={"1.0.0.1"}
 CCDeny="on"
-CCrate="100/60"
-HostCCDeny="off"
+CCrate="5/2"
+HostCCDeny="on"
+HttpReferCCDeny="on"
+HttpReferCCRate="5/2/120"
 html=[[
 <html xmlns="http://www.w3.org/1999/xhtml"><head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">

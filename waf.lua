@@ -4,6 +4,7 @@ local ngxmatch=ngx.re.match
 if whiteip() then
 elseif blockip() then
 elseif whiteurl() then
+elseif httpReferDenycc() then
 elseif denycc() then
 elseif hostDenyCC() then
 elseif ngx.var.http_Acunetix_Aspect then
