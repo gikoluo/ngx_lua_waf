@@ -5,6 +5,7 @@
 3. 完善DenyCC，将匹配规则由ip+url改为ip+host，更加符合个人使用情况。
 4. 添加根据host+url限制访问频率的功能，可自定义某个URL并配置限制频率。配置规则为 [wafconf/hostdenycc](wafconf/hostdenycc) ，请按照示例的格式来添加规则（`URL:www.example.com/denycc/ RATE:10/5/300`），注意 URL 和 RATE 有空格分隔。示例中，“10/5/300”代表5秒内访问达到10次就限制访问300秒。
 5. 扩展whiteurl模块，添加 host+url 匹配规则，例如: `URL:www.example.com/whiteurl/`。可配合 DenyCC 功能来使用(例如该服务器中配置有多个网站，若想忽略某些网站，就可以将其添加到whiteurl中)
+6. 添加根据 http refer 限制访问的功能，配置规则为：`HttpReferCCDeny="on" HttpReferCCRate="5/2/120"`。添加该功能是因为本人发现攻击我网站的访问中，http refer 都是相同的，而访问 IP 足足有一段的 IP，因此根据IP+host无法很好地防住，根据 http refer 可以限制其大量IP相同HTTP refer 的访问。
 
 下面是原作者的README内容
 
