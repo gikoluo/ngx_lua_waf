@@ -213,7 +213,7 @@ function denycc()
                 ngx.exit(503)
                 return true
             elseif req == CCcount then
-                limit:set(token,req+1,600)
+                limit:replace(token,req+1,600)
                 log("CCDeny","-"," ban a ip ",'-')
                 ngx.exit(503)
                 return true
@@ -221,7 +221,13 @@ function denycc()
                  limit:incr(token,1)
             end
         else
-            limit:set(token,1,CCseconds)
+            local succ, err, forcible = limit:set(token,1,CCseconds)
+            if not succ and err == "no memory" or forcible then
+                ngx.log(ngx.WARN, "Fails to allocate memory for the current key-value item,consider raising the 'lua_shared_dict limit' memery. Now flush items")
+                if limit:flush_expired() > 0 then
+                    limit:set(token,1,CCseconds)
+                end
+            end
         end
     end
     return false
@@ -249,7 +255,7 @@ function httpReferDenycc()
                     ngx.exit(503)
                     return true
                 elseif req == CCcount then
-                    limit:set(token,req+1,CCbanseconds)
+                    limit:replace(token,req+1,CCbanseconds)
                     log("HttpReferCCDeny","-"," ban a http_refer ","rule: "..httpRefer)
                     ngx.exit(503)
                     return true
@@ -257,7 +263,13 @@ function httpReferDenycc()
                     limit:incr(token,1)
                 end
             else
-                limit:set(token,1,CCseconds)
+                local succ, err, forcible = limit:set(token,1,CCseconds)
+                if not succ and err == "no memory" or forcible then
+                    ngx.log(ngx.WARN, "Fails to allocate memory for the current key-value item,consider raising the 'lua_shared_dict limit' memery. Now flush items")
+                    if limit:flush_expired() > 0 then
+                        limit:set(token,1,CCseconds)
+                    end
+                end
             end
         end
     end
@@ -286,7 +298,7 @@ function hostDenyCC()
                                 ngx.exit(503)
                                 return true
                             elseif req == CCcount then
-                                limit:set(token,req+1,CCbanseconds)
+                                limit:replace(token,req+1,CCbanseconds)
                                 log("HOSDENYCC",uri," ban a ip: "..remote_ip,rule)
                                 ngx.exit(503)
                                 return true
@@ -294,7 +306,13 @@ function hostDenyCC()
                                 limit:incr(token,1)
                             end
                         else
-                            limit:set(token,1,CCseconds)
+                            local succ, err, forcible = limit:set(token,1,CCseconds)
+                            if not succ and err == "no memory" or forcible then
+                                ngx.log(ngx.WARN, "Fails to allocate memory for the current key-value item,consider raising the 'lua_shared_dict limit' memery. Now flush items")
+                                if limit:flush_expired() > 0 then
+                                    limit:set(token,1,CCseconds)
+                                end
+                            end
                         end
                     end
                 end
