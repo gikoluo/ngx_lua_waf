@@ -7,6 +7,8 @@
 5. 扩展whiteurl模块，添加 host+url 匹配规则，例如: `URL:www.example.com/whiteurl/`。可配合 DenyCC 功能来使用(例如该服务器中配置有多个网站，若想忽略某些网站，就可以将其添加到whiteurl中)
 6. 添加根据 http refer 限制访问的功能，配置规则为：`HttpReferCCDeny="on" HttpReferCCRate="5/2/120"`。添加该功能是因为本人发现攻击我网站的访问中，http refer 都是相同的，而访问 IP 足足有一段的 IP，因此根据IP+host无法很好地防住，根据 http refer 可以限制其大量IP相同HTTP refer 的访问。
 
+> 详细的功能说明见：[ngx_lua_waf 个人增强版使用说明](https://blog.sunriseydy.top/technology/server-blog/server/ngx_lua_waf/)
+
 下面是原作者的README内容
 
 ## ngx_lua_waf
