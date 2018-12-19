@@ -88,12 +88,12 @@ function whiteurl()
                 -- 针对完整 URL 白名单进行匹配
                 if ngxfind(rule,"URL:","sjo") then
                     rule=string.gsub(rule,"URL:","",1)
-                    if ngxfind(ngx.var.host..ngx.var.uri,rule,"isjo") then
-                        -- log('whiteurl',ngx.var.uri,'-',rule)
+                    if ngxfind(ngx.var.host..ngx.var.request_uri,rule,"isjo") then
+                        -- log('whiteurl',ngx.var.request_uri,'-',rule)
                         return true
                     end
-                elseif ngxfind(ngx.var.uri,rule,"isjo") then
-                    -- log('whiteurl',ngx.var.uri,'-',rule)
+                elseif ngxfind(ngx.var.request_uri,rule,"isjo") then
+                    -- log('whiteurl',ngx.var.request_uri,'-',rule)
                     return true 
                 end
             end
@@ -201,7 +201,7 @@ end
 
 function denycc()
     if CCDeny then
-        local uri=ngx.var.uri
+        local uri=ngx.var.request_uri
         local host=ngx.var.host
         CCcount=tonumber(string.match(CCrate,'(.*)/'))
         CCseconds=tonumber(string.match(CCrate,'/(.*)'))
@@ -235,7 +235,7 @@ end
 
 function httpReferDenycc()
     if HttpReferCCDeny then
-        local uri=ngx.var.uri
+        local uri=ngx.var.request_uri
         local host=ngx.var.host
         local httpRefer=ngx.var.http_referer
         if httpRefer == nil or httpRefer == "" then
@@ -278,7 +278,7 @@ end
 
 function hostDenyCC()
     if HostCCDeny then
-        local uri=ngx.var.uri
+        local uri=ngx.var.request_uri
         local host=ngx.var.host
         local remote_ip = getClientIp()
         if hostccdeny ~= nil then
