@@ -125,6 +125,7 @@ end
 function args()
     for _,rule in pairs(argsrules) do
         local args = ngx.req.get_uri_args()
+        local data
         for key, val in pairs(args) do
             if type(val)=='table' then
                  local t={}
