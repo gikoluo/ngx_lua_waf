@@ -1,6 +1,6 @@
 RulePath = "/www/server/panel/vhost/wafconf/"
 attacklog = "on"
-logdir = "/www/wwwlogs/waf/"
+logdir = "/www/wwwlogs/waf"
 UrlDeny="on"
 Redirect="on"
 CookieMatch="off"
