@@ -20,7 +20,7 @@ Redirect=optionIsOn(Redirect)
 local file = io.open('config.lua')
 
 function getClientIp()
-        IP  = ngx.var.remote_addr 
+        local IP  = ngx.var.remote_addr 
         if IP == nil then
                 IP  = "unknown"
         end
@@ -41,6 +41,7 @@ function log(method,url,data,ruletag)
         local ua = ngx.var.http_user_agent
         local servername=ngx.var.host
         local time=ngx.localtime()
+        local line = ""
         if ua  then
             line = realIp.." ["..time.."] \""..method.." "..servername.." - "..url.."\" \""..data.."\"  \""..ua.."\" \""..ruletag.."\"\n"
         else
@@ -203,8 +204,8 @@ function denycc()
     if CCDeny then
         local uri=ngx.var.request_uri
         local host=ngx.var.host
-        CCcount=tonumber(string.match(CCrate,'(.*)/'))
-        CCseconds=tonumber(string.match(CCrate,'/(.*)'))
+        local CCcount=tonumber(string.match(CCrate,'(.*)/'))
+        local CCseconds=tonumber(string.match(CCrate,'/(.*)'))
         local token = getClientIp()..host
         local limit = ngx.shared.limit
         local req,_=limit:get(token)
@@ -243,9 +244,9 @@ function httpReferDenycc()
         end
         local m, err = ngxmatch(HttpReferCCRate,"([0-9]+)/([0-9]+)/([0-9]+)")
         if m then
-            CCcount=tonumber(m[1])
-            CCseconds=tonumber(m[2])
-            CCbanseconds=tonumber(m[3])
+            local CCcount=tonumber(m[1])
+            local CCseconds=tonumber(m[2])
+            local CCbanseconds=tonumber(m[3])
 
             local token = host..httpRefer
             local limit = ngx.shared.limit
@@ -287,9 +288,9 @@ function hostDenyCC()
                 if m then
                     rule = m[1]
                     if ngxfind(host..uri,rule,"isjo") then
-                        CCcount=tonumber(m[2])
-                        CCseconds=tonumber(m[3])
-                        CCbanseconds=tonumber(m[4])
+                        local CCcount=tonumber(m[2])
+                        local CCseconds=tonumber(m[3])
+                        local CCbanseconds=tonumber(m[4])
                         local token = remote_ip..rule
                         local limit = ngx.shared.limit
                         local req,_=limit:get(token)
